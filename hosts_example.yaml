@@ -1,0 +1,32 @@
+all:
+  children:
+    nextcloud:
+      hosts:
+        192.168.1.11:
+
+    postgres:
+      hosts:
+        192.168.1.11:
+
+      vars:
+        postgres_version: 13
+        postgres_admin_password: <database password>
+
+  vars:
+    ansible_user: <host user>
+    ansible_become: yes
+    ansible_password: <host password>
+
+    nc_ext_ip: <nextcloud external ip>
+    nc_hostname: nc.example.com
+    nc_data_dir: /usr/data
+    
+    nc_admin_user: <nextcloud admin user>
+    nc_admin_password: <nextcloud admin password>
+
+    install_db: no
+    db_name: <database name>
+    db_user: <database user>
+    # TODO refactor this
+    db_password: <database password>
+      

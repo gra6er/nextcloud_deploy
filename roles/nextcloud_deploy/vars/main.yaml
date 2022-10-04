@@ -1,0 +1,31 @@
+---
+packages:
+  - yum-utils 
+  - unzip 
+  - curl 
+  - wget
+  - bash-completion
+  - policycoreutils-python-utils
+  - mlocate
+  - bzip2
+  - httpd
+  - redis
+
+php_packages:	
+  - php 
+  - php-gd 
+  - php-mbstring 
+  - php-intl 
+  - php-pecl-apcu
+  - php-mysqlnd 
+  - php-opcache 
+  - php-json 
+  - php-zip 
+  - php-process
+  - php-redis 
+  - php-imagick
+  - php-pgsql
+
+trusted_domains:
+  - "{{ nc_hostname }}"
+  - "{{ nc_ext_ip }}"

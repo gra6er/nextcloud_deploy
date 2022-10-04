@@ -1,0 +1,139 @@
+---
+- name: Install packages
+  ansible.builtin.dnf:
+    name: "{{ packages }}"
+    state: latest
+
+- name: Upgrade all packages
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+
+- name: Template apache2 virtual host file
+  ansible.builtin.template:
+    src: templates/nextcloud.conf.j2
+    dest: /etc/httpd/conf.d/nextcloud.conf
+    mode: '0644'
+
+- name: Enable and start service httpd
+  ansible.builtin.service:
+    name: httpd
+    state: started
+    enabled: yes
+
+- name: Enable and start service redis
+  ansible.builtin.service:
+    name: redis
+    state: started
+    enabled: yes
+
+- name: Permit traffic in public zone for http service
+  ansible.posix.firewalld:
+    zone: public
+    service: http
+    permanent: yes
+    immediate: true
+    state: enabled
+
+- name: Install remi repo rpm
+  ansible.builtin.dnf:
+    name: 'https://rpms.remirepo.net/enterprise/remi-release-8.rpm'
+    state: present
+    disable_gpg_check: yes
+    
+- name: Install php:remi-7.4 module
+  dnf:
+    name: '@php:remi-7.4'
+    enablerepo: remi-modular,remi-safe
+    state: present  
+
+
+- name: Install php packages
+  ansible.builtin.dnf:
+    name: "{{ php_packages }}"
+    state: latest
+
+- name: Copy file pgsql.ini file
+  ansible.builtin.copy:
+    src: files/20-pgsql.ini
+    dest: /etc/php.d/20-pgsql.ini
+
+- name: Create tmp directory
+  ansible.builtin.file:
+    path: ~/tmp
+    state: directory
+    mode: '0755'
+
+- name: Download nextcloud zip
+  ansible.builtin.get_url:
+    url: https://download.nextcloud.com/server/releases/latest.zip
+    dest: ~/tmp
+    checksum: md5:https://download.nextcloud.com/server/releases/latest.zip.md5
+
+- name: Unarchive nextcloud zip to web server folder
+  ansible.builtin.unarchive:
+    src: ~/tmp/latest.zip
+    dest: /var/www/html
+    remote_src: yes
+    owner: apache
+    group: apache
+
+# - name: Template config.php file
+#   ansible.builtin.template:
+#     src: templates/config.php.j2
+#     dest: /var/www/html/nextcloud/config/config.php
+#     mode: '0644'
+#     owner: apache
+#     group: apache
+
+- name: Create nextcloud data directory
+  ansible.builtin.file:
+    path: "{{ nc_data_dir }}"
+    state: directory
+    mode: '0755'
+    owner: apache
+    group: apache
+
+- name: Restart service httpd
+  ansible.builtin.service:
+    name: httpd
+    state: restarted
+
+- name: Set SELinux configuration
+  ansible.builtin.include_tasks: selinux.yaml
+
+
+- name: Install nextcloud via CLI
+  ansible.builtin.command: 
+    chdir: /var/www/html/nextcloud
+    cmd: >
+      php occ  maintenance:install  
+      --database "pgsql" 
+      --database-host "{{ hostvars[groups.postgres[0]].inventory_hostname }}"
+      --database-name "{{ db_name }}"
+      --database-user "{{ db_user }}"  
+      --database-pass "{{ db_password }}"
+      --data-dir "{{ nc_data_dir }}"  
+      --admin-user "{{ nc_admin_user }}"  
+      --admin-pass "{{ nc_admin_password }}"
+  become_method: sudo
+  become_user: apache
+
+### Post installation tasks
+
+- name: Add trusted domains
+  ansible.builtin.command: 
+    chdir: /var/www/html/nextcloud
+    cmd: php occ config:system:set trusted_domains {{ index + 1 }} --value={{ item }}
+  become_method: sudo
+  become_user: apache
+  loop: "{{ trusted_domains }} + ['{{ inventory_hostname }}']"
+  loop_control:
+        index_var: index
+
+### Todo
+
+# Increase php memory limit to 512M
+# Edit file /etc/php.ini, parameter memory_limit
+# Edit file /etc/php-fpm.d/www.conf, parameter php_admin_value[memory_limit]
+# Restart php-fpm service

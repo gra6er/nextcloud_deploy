@@ -1,0 +1,37 @@
+---
+- name: Deploy Postgresql
+  hosts: postgres
+  gather_facts: no
+  roles:
+    - role: psql_install
+      vars:
+        run_init_script: yes
+        rm_init_script: yes
+      when: install_db
+
+- name: Deploy Nextcloud
+  hosts: nextcloud
+  gather_facts: no
+  roles:
+    - role: nextcloud_deploy
+
+  # vars:
+  #   trusted_domains:
+  #     - "{{ nc_hostname }}"
+  #     - "{{ nc_ext_ip }}"
+  # tasks:
+  #   - debug:
+  #       msg: "item: {{ item}}"
+  #     loop: "{{ trusted_domains }} + ['{{ inventory_hostname }}']"
+      
+      
+      # loop: 
+      #   - "{{ nc_hostname }}"
+      #   - "{{ nc_ip }}"
+      #   - "{{ nc_ext_ip }}"
+      # loop_control:
+      #   index_var: index
+          
+        
+        
+#"{{ hostvars[groups.postgres[0]].inventory_hostname }}"

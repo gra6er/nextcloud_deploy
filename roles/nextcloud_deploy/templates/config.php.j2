@@ -1,0 +1,35 @@
+<?php
+$CONFIG = array (
+    'instanceid' => 'ocs1yx39dzie',
+    'passwordsalt' => 'SCCyJ+Gube4nHF54SzMS3+bITqR6ow',
+    'secret' => '1FYgf7p6Stidkqt7Q5dHDHOn5MXNhWhXObKiKn6tfYG5sOMU',
+    'trusted_domains' => 
+    array (
+    0 => 'localhost',
+{% for item in trusted_domains %}
+    {{ loop.index }} => '{{ item }}',
+{% endfor %}
+    ),
+    'datadirectory' => '{{ nc_data_dir }}',
+    'dbtype' => 'pgsql',
+    'version' => '24.0.4.1',
+    'overwrite.cli.url' => 'http://localhost',
+    'dbname' => '{{ db_name }}',
+    'dbhost' => '{{ hostvars[groups.postgres[0]].inventory_hostname }}',
+    'dbport' => '',
+    'dbtableprefix' => 'oc_',
+    'dbuser' => '{{ db_user }}',
+    'dbpassword' => '{{ db_password }}',
+    'log_type' => 'file',
+    'logfile' => 'nextcloud.log',
+    'loglevel' => 3,
+    'logdateformat' => 'F d, Y H:i:s',
+    'installed' => true,
+    'memcache.distributed' => '\OC\Memcache\Redis',
+    'memcache.locking' => '\OC\Memcache\Redis',
+    'memcache.local' => '\OC\Memcache\APCu',
+    'redis' => array(
+    'host' => 'localhost',
+    'port' => 6379,
+    ),
+);
